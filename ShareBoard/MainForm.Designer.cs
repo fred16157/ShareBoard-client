@@ -34,6 +34,8 @@ namespace ShareBoard
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.portTextBox = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.toggleBtn = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.addressTextBox = new System.Windows.Forms.TextBox();
@@ -42,8 +44,6 @@ namespace ShareBoard
             this.label3 = new System.Windows.Forms.Label();
             this.clipboardCopyTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.portTextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -84,6 +84,22 @@ namespace ShareBoard
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "연결";
+            // 
+            // portTextBox
+            // 
+            this.portTextBox.Location = new System.Drawing.Point(5, 76);
+            this.portTextBox.Name = "portTextBox";
+            this.portTextBox.Size = new System.Drawing.Size(365, 21);
+            this.portTextBox.TabIndex = 1;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(5, 60);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(57, 12);
+            this.label4.TabIndex = 3;
+            this.label4.Text = "서버 포트";
             // 
             // toggleBtn
             // 
@@ -131,7 +147,7 @@ namespace ShareBoard
             this.clipboardPasteTextBox.Location = new System.Drawing.Point(7, 76);
             this.clipboardPasteTextBox.Name = "clipboardPasteTextBox";
             this.clipboardPasteTextBox.Size = new System.Drawing.Size(410, 21);
-            this.clipboardPasteTextBox.TabIndex = 3;
+            this.clipboardPasteTextBox.TabIndex = 4;
             // 
             // label3
             // 
@@ -147,7 +163,7 @@ namespace ShareBoard
             this.clipboardCopyTextBox.Location = new System.Drawing.Point(8, 32);
             this.clipboardCopyTextBox.Name = "clipboardCopyTextBox";
             this.clipboardCopyTextBox.Size = new System.Drawing.Size(409, 21);
-            this.clipboardCopyTextBox.TabIndex = 1;
+            this.clipboardCopyTextBox.TabIndex = 3;
             // 
             // label2
             // 
@@ -157,22 +173,6 @@ namespace ShareBoard
             this.label2.Size = new System.Drawing.Size(105, 12);
             this.label2.TabIndex = 0;
             this.label2.Text = "클립보드에서 복사";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(5, 60);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(57, 12);
-            this.label4.TabIndex = 3;
-            this.label4.Text = "서버 포트";
-            // 
-            // portTextBox
-            // 
-            this.portTextBox.Location = new System.Drawing.Point(5, 76);
-            this.portTextBox.Name = "portTextBox";
-            this.portTextBox.Size = new System.Drawing.Size(365, 21);
-            this.portTextBox.TabIndex = 4;
             // 
             // MainForm
             // 

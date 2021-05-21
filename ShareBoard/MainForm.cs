@@ -6,8 +6,8 @@ using SocketIOSharp.Common;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -33,21 +33,26 @@ namespace ShareBoard
         void OnCopy()
         {
             ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에 복사됨");
-            
-            //if(Clipboard.ContainsImage())
-            //{
-            //    Guid guid = Guid.NewGuid();
-            //    ResizeImage(Clipboard.GetImage(), 200, 200).Save(guid.ToString() + ".bmp");
-            //    builder.AddInlineImage(new Uri("file:///" + Environment.CurrentDirectory + guid.ToString() + ".bmp"));
-            //    File.Delete(guid.ToString() + ".bmp");
-            //}
-            /*else */
-            if (Clipboard.ContainsText())
+
+            if (Clipboard.ContainsImage())
+            {
+                builder.AddText("(이미지)");
+                if (client != null && client.ReadyState == EngineIOReadyState.OPEN)
+                {
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        Clipboard.GetImage().Save(ms, ImageFormat.Bmp);
+                        string data = Convert.ToBase64String(ms.ToArray());
+                        client.Emit("copy-image", data);
+                    }
+                }
+            }
+            else if (Clipboard.ContainsText())
             {
                 builder.AddText(Clipboard.GetText());
                 if(client != null && client.ReadyState == EngineIOReadyState.OPEN)
                 {
-                    client.Emit("copy", Clipboard.GetText());
+                    client.Emit("copy-text", Clipboard.GetText());
                 }
             }
             
@@ -57,40 +62,37 @@ namespace ShareBoard
             builder.Show();
         }
 
-        void OnPaste(string data)
+        void OnPasteText(string data)
         {
             ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에 복사됨");
             builder.AddText(data);
 
-            Clipboard.SetText(data);
-
+            Invoke(new Action(() =>
+            {
+                Clipboard.SetText(data);
+            }));
+            
             Thread.Sleep(500);
             builder.Show();
         }
-            
-        public static Bitmap ResizeImage(Image image, int width, int height)
+
+        void OnPasteImage(string data)
         {
-            var destRect = new Rectangle(0, 0, width, height);
-            var destImage = new Bitmap(width, height);
+            ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에 복사됨");
+            builder.AddText("(이미지)");
 
-            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
-
-            using (var graphics = Graphics.FromImage(destImage))
+            using(MemoryStream ms = new MemoryStream())
             {
-                graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.CompositingQuality = CompositingQuality.HighQuality;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = SmoothingMode.HighQuality;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                using (var wrapMode = new ImageAttributes())
+                byte[] buffer = Convert.FromBase64String(data);
+                ms.Write(buffer, 0, buffer.Length);
+                Invoke(new Action(() =>
                 {
-                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
-                }
+                    Clipboard.SetImage(Image.FromStream(ms));
+                }));
             }
 
-            return destImage;
+            Thread.Sleep(500);
+            builder.Show();
         }
 
         private void ToggleBtnClick(object sender, EventArgs e)
@@ -138,9 +140,19 @@ namespace ShareBoard
                 }));
             });
 
-            client.On("paste", (data) =>
+            client.On(SocketIOEvent.ERROR, () =>
             {
-                OnPaste(data[0].ToString());
+                client.Dispose();
+            });
+
+            client.On("paste-text", (data) =>
+            {
+                OnPasteText(data[0].ToString());
+            });
+
+            client.On("paste-image", (data) =>
+            {
+                OnPasteImage(data[0].ToString());
             });
         }
 
