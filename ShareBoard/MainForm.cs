@@ -17,11 +17,17 @@ namespace ShareBoard
     {
         static bool isConnected = false;
         SocketIOClient client;
+        Combination copyCombo;
+        SettingsInfo info;
+        
         public MainForm()
         {
             InitializeComponent();
 
-            Combination copyCombo = Combination.FromString("Control+Alt+C");
+            info = SettingsInfo.ReadSettingsInfo();
+
+            copyCombo = Combination.FromString(info.CopyComboString);
+            autoConnectCheckBox.Checked = info.ConnectOnStartup;
 
             Dictionary<Combination, Action> assignment = new Dictionary<Combination, Action> { 
                 { copyCombo, OnCopy } 
@@ -113,7 +119,21 @@ namespace ShareBoard
         public void Connect()
         {
             string address = addressTextBox.Text;
-            ushort port = ushort.Parse(portTextBox.Text);
+            bool result = ushort.TryParse(portTextBox.Text, out ushort port);
+            if (!result)
+            {
+                Invoke(new Action(() =>
+                {
+                    isConnected = false;
+                    toggleBtn.Enabled = true;
+                    addressTextBox.Enabled = true;
+                    portTextBox.Enabled = true;
+                    toggleBtn.Text = "연결";
+                }));
+                return;
+            }
+            info.RemoteAddress = address;
+            info.RemotePort = port;
             client = new SocketIOClient(new SocketIOClientOption(EngineIOScheme.http, address, port));
 
             client.Connect();
@@ -159,6 +179,31 @@ namespace ShareBoard
         public void Disconnect()
         {
             client.Dispose();
+        }
+
+        private void autoConnectCheckBoxCheckedChanged(object sender, EventArgs e)
+        {
+            info.ConnectOnStartup = autoConnectCheckBox.Checked;
+        }
+
+        
+
+        private void MainFormClosing(object sender, FormClosingEventArgs e)
+        {
+            SettingsInfo.WriteSettingsInfo(info);
+        }
+
+        private void MainFormLoad(object sender, EventArgs e)
+        {
+            if (info.ConnectOnStartup)
+            {
+                toggleBtn.Enabled = false;
+                addressTextBox.Text = info.RemoteAddress;
+                portTextBox.Text = info.RemotePort.ToString();
+                addressTextBox.Enabled = false;
+                portTextBox.Enabled = false;
+                Connect();
+            }
         }
     }
 }
