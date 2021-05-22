@@ -15,7 +15,10 @@ namespace ShareBoard
 {
     public partial class MainForm : Form
     {
+        public enum LogType { Error, Info, Success }
+
         static bool isConnected = false;
+        static bool isConnecting = false;
         SocketIOClient client;
         Combination copyCombo;
         SettingsInfo info;
@@ -32,8 +35,13 @@ namespace ShareBoard
             Dictionary<Combination, Action> assignment = new Dictionary<Combination, Action> { 
                 { copyCombo, OnCopy } 
             };
-
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomainProcessExit;
             Hook.GlobalEvents().OnCombination(assignment);
+        }
+
+        private void CurrentDomainProcessExit(object sender, EventArgs e)
+        {
+            SettingsInfo.WriteSettingsInfo(info);
         }
 
         void OnCopy()
@@ -103,10 +111,11 @@ namespace ShareBoard
 
         private void ToggleBtnClick(object sender, EventArgs e)
         {
-            toggleBtn.Enabled = false;
             addressTextBox.Enabled = false;
             portTextBox.Enabled = false;
-            if(!isConnected)
+            usernameTextBox.Enabled = false;
+            passwordTextBox.Enabled = false;
+            if(!isConnected && !isConnecting)
             {
                 Connect();
             }
@@ -118,17 +127,26 @@ namespace ShareBoard
 
         public void Connect()
         {
+            SetStatusLabel(LogType.Info, "연결중");
+            Invoke(new Action(() =>
+            {
+                isConnecting = true;
+                toggleBtn.Text = "연결 끊기";
+            }));
             string address = addressTextBox.Text;
             bool result = ushort.TryParse(portTextBox.Text, out ushort port);
             if (!result)
             {
+                SetStatusLabel(LogType.Error, "포트가 올바르지 않음");
                 Invoke(new Action(() =>
                 {
                     isConnected = false;
                     toggleBtn.Enabled = true;
                     addressTextBox.Enabled = true;
                     portTextBox.Enabled = true;
-                    toggleBtn.Text = "연결";
+                    usernameTextBox.Enabled = true;
+                    passwordTextBox.Enabled = true;
+                    toggleBtn.Text = "연결";                    
                 }));
                 return;
             }
@@ -140,12 +158,7 @@ namespace ShareBoard
 
             client.On(SocketIOEvent.CONNECTION, () =>
             {
-                Invoke(new Action(() =>
-                {
-                    toggleBtn.Enabled = true;
-                    isConnected = true;
-                    toggleBtn.Text = "연결 끊기";
-                }));
+                client.Emit("login", usernameTextBox.Text, passwordTextBox.Text);
             });
 
             client.On(SocketIOEvent.DISCONNECT, () =>
@@ -153,16 +166,35 @@ namespace ShareBoard
                 Invoke(new Action(() =>
                 {
                     isConnected = false;
+                    isConnecting = false;
                     toggleBtn.Enabled = true;
                     addressTextBox.Enabled = true;
                     portTextBox.Enabled = true;
+                    usernameTextBox.Enabled = true;
+                    passwordTextBox.Enabled = true;
                     toggleBtn.Text = "연결";
                 }));
             });
 
             client.On(SocketIOEvent.ERROR, () =>
             {
+                SetStatusLabel(LogType.Error, "연결 오류");
                 client.Dispose();
+            });
+
+            client.On("login-result", (data) =>
+            {
+                if(data[0].ToObject<bool>())
+                {
+                    SetStatusLabel(LogType.Success, "연결됨");
+                    isConnected = true;
+                    isConnecting = false;
+                }
+                else
+                {
+                    SetStatusLabel(LogType.Error, "로그인 실패");
+                    client.Dispose();
+                }
             });
 
             client.On("paste-text", (data) =>
@@ -174,30 +206,56 @@ namespace ShareBoard
             {
                 OnPasteImage(data[0].ToString());
             });
+
+            ShareBoardClient.client = client;
         }
 
         public void Disconnect()
         {
+            SetStatusLabel(LogType.Info, "연결 해제됨");
             client.Dispose();
         }
 
-        private void autoConnectCheckBoxCheckedChanged(object sender, EventArgs e)
+        private void AutoConnectCheckBoxCheckedChanged(object sender, EventArgs e)
         {
             info.ConnectOnStartup = autoConnectCheckBox.Checked;
         }
 
-        
+        public void SetStatusLabel(LogType type, string message)
+        {
+            Color color;
+            switch(type)
+            {
+                case LogType.Info:
+                    color = Color.Black;
+                    break;
+                case LogType.Success:
+                    color = Color.Green;
+                    break;
+                case LogType.Error:
+                    color = Color.Red;
+                    break;
+                default:
+                    color = Color.Black;
+                    break;
+            }
+
+            Invoke(new Action(() =>
+            {
+                statusLabel.ForeColor = color;
+                statusLabel.Text = message;
+            }));
+        }
 
         private void MainFormClosing(object sender, FormClosingEventArgs e)
         {
-            SettingsInfo.WriteSettingsInfo(info);
+            
         }
 
         private void MainFormLoad(object sender, EventArgs e)
         {
             if (info.ConnectOnStartup)
             {
-                toggleBtn.Enabled = false;
                 addressTextBox.Text = info.RemoteAddress;
                 portTextBox.Text = info.RemotePort.ToString();
                 addressTextBox.Enabled = false;
