@@ -206,8 +206,6 @@ namespace ShareBoard
             {
                 OnPasteImage(data[0].ToString());
             });
-
-            ShareBoardClient.client = client;
         }
 
         public void Disconnect()
