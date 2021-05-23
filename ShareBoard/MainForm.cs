@@ -250,7 +250,16 @@ namespace ShareBoard
 
         private void MainFormClosing(object sender, FormClosingEventArgs e)
         {
-            SettingsInfo.WriteSettingsInfo(info);   
+            if (!isConnected && !isConnecting)
+            {
+                e.Cancel = false;
+                return;
+            }
+            ToastContentBuilder builder = new ToastContentBuilder();
+            builder.AddText("프로그램이 최소화됨").AddText("클립보드 정보를 계속 수신하기 위해 프로그램이 최소화되었습니다.").Show();
+            e.Cancel = true;
+            WindowState = FormWindowState.Minimized;
+            ShowInTaskbar = false;
         }
 
         private void MainFormLoad(object sender, EventArgs e)
@@ -267,6 +276,12 @@ namespace ShareBoard
                 passwordTextBox.Enabled = false;
                 Connect();
             }
+        }
+
+        private void NotifyIconMouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            WindowState = FormWindowState.Normal;
+            ShowInTaskbar = true;
         }
     }
 }
