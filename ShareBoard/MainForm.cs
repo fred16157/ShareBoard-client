@@ -276,6 +276,13 @@ namespace ShareBoard
                 passwordTextBox.Enabled = false;
                 Connect();
             }
+
+            ContextMenu notifyIconContextMenu = new ContextMenu();
+            notifyIconContextMenu.MenuItems.Add("연결 끊기", (_, ev) => {
+                Disconnect();
+            });
+            notifyIconContextMenu.MenuItems.Add("종료", (_, ev) => Application.Exit());
+            notifyIcon.ContextMenu = notifyIconContextMenu;
         }
 
         private void NotifyIconMouseDoubleClick(object sender, MouseEventArgs e)
