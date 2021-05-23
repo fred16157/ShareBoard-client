@@ -121,10 +121,11 @@ namespace ShareBoard
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(5, 167);
+            this.passwordTextBox.Location = new System.Drawing.Point(7, 167);
             this.passwordTextBox.Name = "passwordTextBox";
+            this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(365, 21);
-            this.passwordTextBox.TabIndex = 7;
+            this.passwordTextBox.TabIndex = 3;
             // 
             // label2
             // 
@@ -140,7 +141,7 @@ namespace ShareBoard
             this.usernameTextBox.Location = new System.Drawing.Point(5, 122);
             this.usernameTextBox.Name = "usernameTextBox";
             this.usernameTextBox.Size = new System.Drawing.Size(365, 21);
-            this.usernameTextBox.TabIndex = 5;
+            this.usernameTextBox.TabIndex = 2;
             // 
             // autoConnectCheckBox
             // 
@@ -174,7 +175,7 @@ namespace ShareBoard
             this.toggleBtn.Location = new System.Drawing.Point(297, 217);
             this.toggleBtn.Name = "toggleBtn";
             this.toggleBtn.Size = new System.Drawing.Size(75, 23);
-            this.toggleBtn.TabIndex = 2;
+            this.toggleBtn.TabIndex = 5;
             this.toggleBtn.Text = "연결";
             this.toggleBtn.UseVisualStyleBackColor = true;
             this.toggleBtn.Click += new System.EventHandler(this.ToggleBtnClick);

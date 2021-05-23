@@ -152,6 +152,8 @@ namespace ShareBoard
             }
             info.RemoteAddress = address;
             info.RemotePort = port;
+            info.Username = usernameTextBox.Text;
+            info.Password = passwordTextBox.Text;
             client = new SocketIOClient(new SocketIOClientOption(EngineIOScheme.http, address, port));
 
             client.Connect();
@@ -247,7 +249,7 @@ namespace ShareBoard
 
         private void MainFormClosing(object sender, FormClosingEventArgs e)
         {
-            
+            SettingsInfo.WriteSettingsInfo(info);   
         }
 
         private void MainFormLoad(object sender, EventArgs e)
@@ -256,8 +258,12 @@ namespace ShareBoard
             {
                 addressTextBox.Text = info.RemoteAddress;
                 portTextBox.Text = info.RemotePort.ToString();
+                usernameTextBox.Text = info.Username;
+                passwordTextBox.Text = info.Password;
                 addressTextBox.Enabled = false;
                 portTextBox.Enabled = false;
+                usernameTextBox.Enabled = false;
+                passwordTextBox.Enabled = false;
                 Connect();
             }
         }

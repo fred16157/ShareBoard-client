@@ -15,11 +15,18 @@ namespace ShareBoard
 
         public string RemoteAddress { get; set; }
         public int RemotePort { get; set; }
+
+        public string Username { get; set; }
+        public string Password { get; set; }
         
         public SettingsInfo(bool connectOnStartup, string copyComboString)
         {
             ConnectOnStartup = connectOnStartup;
             CopyComboString = copyComboString;
+            RemoteAddress = "";
+            RemotePort = -1;
+            Username = "";
+            Password = "";
         }
 
         public static void WriteSettingsInfo(SettingsInfo info)
