@@ -186,6 +186,7 @@ namespace ShareBoard
 
             client.On("login-result", (data) =>
             {
+
                 if(data[0].ToObject<bool>())
                 {
                     SetStatusLabel(LogType.Success, "연결됨");
