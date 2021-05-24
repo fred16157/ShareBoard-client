@@ -47,7 +47,6 @@ namespace ShareBoard
             this.toggleBtn = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.addressTextBox = new System.Windows.Forms.TextBox();
-            this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -246,7 +245,6 @@ namespace ShareBoard
         private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button registerBtn;
-        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
     }
 }
 

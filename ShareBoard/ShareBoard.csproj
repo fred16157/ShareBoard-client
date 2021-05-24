@@ -141,6 +141,9 @@
     <PackageReference Include="SocketIOSharp">
       <Version>2.0.3</Version>
     </PackageReference>
+    <PackageReference Include="WindowsAPICodePack-Shell">
+      <Version>1.1.1</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

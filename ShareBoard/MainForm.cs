@@ -1,6 +1,7 @@
 ﻿using EngineIOSharp.Common.Enum;
 using Gma.System.MouseKeyHook;
 using Microsoft.Toolkit.Uwp.Notifications;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using SocketIOSharp.Client;
 using SocketIOSharp.Common;
 using System;
@@ -55,10 +56,12 @@ namespace ShareBoard
                 case "save-file":
                     Invoke(new Action(() =>
                     {
-                        folderBrowserDialog.RootFolder = Environment.SpecialFolder.Windows;
-                        if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                        CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+                        dialog.IsFolderPicker = true;
+                        dialog.Multiselect = false;
+                        if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                         {
-                            File.WriteAllBytes(Path.Combine(folderBrowserDialog.SelectedPath, filename), fileData);
+                            File.WriteAllBytes(Path.Combine(dialog.FileName, filename), fileData);
                         }
                     }));
                     break;
