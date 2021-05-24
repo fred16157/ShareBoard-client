@@ -34,6 +34,7 @@ namespace ShareBoard
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.registerBtn = new System.Windows.Forms.Button();
             this.statusLabel = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
@@ -46,6 +47,7 @@ namespace ShareBoard
             this.toggleBtn = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.addressTextBox = new System.Windows.Forms.TextBox();
+            this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -73,6 +75,7 @@ namespace ShareBoard
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.registerBtn);
             this.groupBox1.Controls.Add(this.statusLabel);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.label3);
@@ -92,6 +95,16 @@ namespace ShareBoard
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "연결";
+            // 
+            // registerBtn
+            // 
+            this.registerBtn.Location = new System.Drawing.Point(216, 217);
+            this.registerBtn.Name = "registerBtn";
+            this.registerBtn.Size = new System.Drawing.Size(75, 23);
+            this.registerBtn.TabIndex = 11;
+            this.registerBtn.Text = "회원가입";
+            this.registerBtn.UseVisualStyleBackColor = true;
+            this.registerBtn.Click += new System.EventHandler(this.RegisterBtnClick);
             // 
             // statusLabel
             // 
@@ -232,6 +245,8 @@ namespace ShareBoard
         private System.Windows.Forms.TextBox usernameTextBox;
         private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button registerBtn;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
     }
 }
 

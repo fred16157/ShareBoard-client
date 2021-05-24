@@ -5,11 +5,13 @@ using SocketIOSharp.Client;
 using SocketIOSharp.Common;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using Windows.Foundation.Collections;
 
 namespace ShareBoard
 {
@@ -17,12 +19,16 @@ namespace ShareBoard
     {
         public enum LogType { Error, Info, Success }
 
-        static bool isConnected = false;
-        static bool isConnecting = false;
+        bool isConnected = false;
+        bool isConnecting = false;
+        
         SocketIOClient client;
         Combination copyCombo;
         SettingsInfo info;
-        
+        long maxSize;
+        string filename;
+        byte[] fileData;
+
         public MainForm()
         {
             InitializeComponent();
@@ -37,6 +43,26 @@ namespace ShareBoard
             };
             AppDomain.CurrentDomain.ProcessExit += CurrentDomainProcessExit;
             Hook.GlobalEvents().OnCombination(assignment);
+
+            ToastNotificationManagerCompat.OnActivated += ToastNotificationManagerCompatOnActivated;
+        }
+
+        private void ToastNotificationManagerCompatOnActivated(ToastNotificationActivatedEventArgsCompat e)
+        { 
+            ToastArguments args = ToastArguments.Parse(e.Argument);
+            switch(args.Get("action"))
+            {
+                case "save-file":
+                    Invoke(new Action(() =>
+                    {
+                        folderBrowserDialog.RootFolder = Environment.SpecialFolder.Windows;
+                        if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            File.WriteAllBytes(Path.Combine(folderBrowserDialog.SelectedPath, filename), fileData);
+                        }
+                    }));
+                    break;
+            }
         }
 
         private void CurrentDomainProcessExit(object sender, EventArgs e)
@@ -44,30 +70,56 @@ namespace ShareBoard
             SettingsInfo.WriteSettingsInfo(info);
         }
 
+        public void ShowErrorToast(string message)
+        {
+            ToastContentBuilder builder = new ToastContentBuilder().AddText("복사되지 않음");
+            builder.AddText(message);
+
+            Thread.Sleep(500);
+            builder.Show();
+        }
+
         void OnCopy()
         {
-            ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에 복사됨");
+            if(!isConnected)
+            {
+                ShowErrorToast("서버에 연결되지 않았습니다.");
+                return;
+            }
 
-            if (Clipboard.ContainsImage())
+            ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에서 복사됨");
+
+            if(Clipboard.ContainsFileDropList())
+            {
+                StringCollection collection = Clipboard.GetFileDropList();
+                if(collection.Count > 1)
+                {
+                    ShowErrorToast("하나의 파일만 복사할 수 있습니다.");
+                    return;
+                }
+                FileInfo info = new FileInfo(collection[0]);
+                if (info.Length > maxSize)
+                {
+                    ShowErrorToast("파일이 최대 크기를 벗어났습니다 - " + maxSize);
+                    return;
+                }
+                builder.AddText("파일: " + info.Name);
+                client.Emit("copy-file", info.Name, File.ReadAllBytes(collection[0]));
+            }
+            else if (Clipboard.ContainsImage())
             {
                 builder.AddText("(이미지)");
-                if (client != null && client.ReadyState == EngineIOReadyState.OPEN)
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        Clipboard.GetImage().Save(ms, ImageFormat.Bmp);
-                        string data = Convert.ToBase64String(ms.ToArray());
-                        client.Emit("copy-image", data);
-                    }
+                    Clipboard.GetImage().Save(ms, ImageFormat.Bmp);
+                    string data = Convert.ToBase64String(ms.ToArray());
+                    client.Emit("copy-image", data);
                 }
             }
             else if (Clipboard.ContainsText())
             {
                 builder.AddText(Clipboard.GetText());
-                if(client != null && client.ReadyState == EngineIOReadyState.OPEN)
-                {
-                    client.Emit("copy-text", Clipboard.GetText());
-                }
+                client.Emit("copy-text", Clipboard.GetText());
             }
             
             //딜레이가 없으면 E_UNEXPECTED 에러를 뱉는다
@@ -104,6 +156,19 @@ namespace ShareBoard
                     Clipboard.SetImage(Image.FromStream(ms));
                 }));
             }
+
+            Thread.Sleep(500);
+            builder.Show();
+        }
+
+        void OnPasteFile(string name, byte[] data)
+        {
+            filename = name;
+            fileData = data;
+            ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에 복사됨");
+            builder.AddText("파일: " + name);
+
+            builder.AddButton(new ToastButton().SetContent("저장").AddArgument("action", "save-file")).SetBackgroundActivation();
 
             Thread.Sleep(500);
             builder.Show();
@@ -192,6 +257,7 @@ namespace ShareBoard
                     SetStatusLabel(LogType.Success, "연결됨");
                     isConnected = true;
                     isConnecting = false;
+                    maxSize = data[1].ToObject<long>();
                 }
                 else
                 {
@@ -208,6 +274,11 @@ namespace ShareBoard
             client.On("paste-image", (data) =>
             {
                 OnPasteImage(data[0].ToString());
+            });
+
+            client.On("paste-file", (data) =>
+            {
+                OnPasteFile(data[0].ToString(), data[1].ToObject<byte[]>());
             });
         }
 
@@ -289,6 +360,11 @@ namespace ShareBoard
         {
             WindowState = FormWindowState.Normal;
             ShowInTaskbar = true;
+        }
+
+        private void RegisterBtnClick(object sender, EventArgs e)
+        {
+            new RegisterForm().Show();
         }
     }
 }
