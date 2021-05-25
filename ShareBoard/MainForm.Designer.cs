@@ -217,7 +217,7 @@ namespace ShareBoard
             this.ClientSize = new System.Drawing.Size(387, 259);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Name = "MainForm";
-            this.Text = "설정";
+            this.Text = "ShareBoard";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFormClosing);
             this.Load += new System.EventHandler(this.MainFormLoad);
             this.tableLayoutPanel1.ResumeLayout(false);

@@ -10,6 +10,8 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Windows.Foundation.Collections;
@@ -29,6 +31,7 @@ namespace ShareBoard
         long maxSize;
         string filename;
         byte[] fileData;
+        bool isCompressed;
 
         public MainForm()
         {
@@ -62,10 +65,22 @@ namespace ShareBoard
                         if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                         {
                             File.WriteAllBytes(Path.Combine(dialog.FileName, filename), fileData);
+                            if (isCompressed) WriteZipArchive(dialog.FileName);
                         }
                     }));
                     break;
             }
+        }
+
+        private void WriteZipArchive(string path)
+        {
+            FileStream zipStream = new FileStream(Path.Combine(path, "temp.zip"), FileMode.Open);
+            using(ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Read))
+            {
+                archive.ExtractToDirectory(path);
+            }
+            zipStream.Close();
+            File.Delete(Path.Combine(path, "temp.zip"));
         }
 
         private void CurrentDomainProcessExit(object sender, EventArgs e)
@@ -95,19 +110,21 @@ namespace ShareBoard
             if(Clipboard.ContainsFileDropList())
             {
                 StringCollection collection = Clipboard.GetFileDropList();
-                if(collection.Count > 1)
+                string path = collection[0];
+                bool isCompressed = false;
+                if(collection.Count > 1 || File.GetAttributes(path).HasFlag(FileAttributes.Directory))
                 {
-                    ShowErrorToast("하나의 파일만 복사할 수 있습니다.");
-                    return;
+                    path = MakeZipArchive(collection);
+                    isCompressed = true;
                 }
-                FileInfo info = new FileInfo(collection[0]);
+                FileInfo info = new FileInfo(path);
                 if (info.Length > maxSize)
                 {
                     ShowErrorToast("파일이 최대 크기를 벗어났습니다 - " + maxSize);
                     return;
                 }
                 builder.AddText("파일: " + info.Name);
-                client.Emit("copy-file", info.Name, File.ReadAllBytes(collection[0]));
+                client.Emit("copy-file", info.Name, File.ReadAllBytes(path), isCompressed);
             }
             else if (Clipboard.ContainsImage())
             {
@@ -123,6 +140,10 @@ namespace ShareBoard
             {
                 builder.AddText(Clipboard.GetText());
                 client.Emit("copy-text", Clipboard.GetText());
+            }
+            else
+            {
+                ShowErrorToast("지원되는 데이터가 발견되지 않았습니다.");
             }
             
             //딜레이가 없으면 E_UNEXPECTED 에러를 뱉는다
@@ -164,12 +185,14 @@ namespace ShareBoard
             builder.Show();
         }
 
-        void OnPasteFile(string name, byte[] data)
+        void OnPasteFile(string name, byte[] data, bool isCompressed)
         {
             filename = name;
             fileData = data;
+            this.isCompressed = isCompressed;
             ToastContentBuilder builder = new ToastContentBuilder().AddText("클립보드에 복사됨");
-            builder.AddText("파일: " + name);
+            if (isCompressed) builder.AddText("파일 다수: " + data.Length + "바이트");
+            else builder.AddText("파일: " + name);
 
             builder.AddButton(new ToastButton().SetContent("저장").AddArgument("action", "save-file")).SetBackgroundActivation();
 
@@ -281,7 +304,7 @@ namespace ShareBoard
 
             client.On("paste-file", (data) =>
             {
-                OnPasteFile(data[0].ToString(), data[1].ToObject<byte[]>());
+                OnPasteFile(data[0].ToString(), data[1].ToObject<byte[]>(), data[2].ToObject<bool>());
             });
         }
 
@@ -320,6 +343,43 @@ namespace ShareBoard
                 statusLabel.ForeColor = color;
                 statusLabel.Text = message;
             }));
+        }
+
+        public string MakeZipArchive(StringCollection collection)
+        {
+            FileStream zipStream = new FileStream(Path.Combine(Environment.CurrentDirectory, "temp.zip"), FileMode.Create);
+            using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
+            {
+                foreach(string filepath in collection)
+                {
+                    CreateEntryFromAny(archive, filepath);
+                }
+            }
+
+            return Path.Combine(Environment.CurrentDirectory, "temp.zip");
+        }
+
+        public void CreateEntryFromAny(ZipArchive archive, string sourceName, string entryName = "")
+        {
+            var fileName = Path.GetFileName(sourceName);
+            if (File.GetAttributes(sourceName).HasFlag(FileAttributes.Directory))
+            {
+                CreateEntryFromDirectory(archive, sourceName, Path.Combine(entryName, fileName));
+            }
+            else
+            {
+                archive.CreateEntryFromFile(sourceName, Path.Combine(entryName, fileName), CompressionLevel.Fastest);
+            }
+        }
+
+        public void CreateEntryFromDirectory(ZipArchive archive, string sourceDirName, string entryName = "")
+        {
+            string[] files = Directory.GetFiles(sourceDirName).Concat(Directory.GetDirectories(sourceDirName)).ToArray();
+            archive.CreateEntry(Path.Combine(entryName, Path.GetFileName(sourceDirName)));
+            foreach (var file in files)
+            {
+                CreateEntryFromAny(archive, file, entryName);
+            }
         }
 
         private void MainFormClosing(object sender, FormClosingEventArgs e)
