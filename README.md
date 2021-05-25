@@ -4,7 +4,7 @@
 
 ## 사용법
 
-먼저 [ShareBoard-server]("https://github.com/fred16157/ShareBoard-server")가 실행중인 컴퓨터가 있어야 합니다. 이 서버에 연결된 클라이언트끼리만 연결할 수 있습니다.
+먼저 [ShareBoard-server](https://github.com/fred16157/ShareBoard-server)가 실행중인 컴퓨터가 있어야 합니다. 이 서버에 연결된 클라이언트끼리만 연결할 수 있습니다.
 
 만약 서버를 열 여건이 되지 않거나 여는 법을 모르신다면 성능 저하를 감수하고 주소 222.110.147.50, 포트 9000에 연결하여 사용하실 수 있습니다.
 
